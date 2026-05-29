@@ -1,185 +1,128 @@
-import { useEffect, useRef, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
-import { Bag, addBag, getBags, removeBag } from "@/lib/bags-store";
-import { downloadCatalogPDF } from "@/lib/catalog-pdf";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { NavBar, SiteFooter } from "@/components/NavBar";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Download, Phone, Plus, Trash2, ImagePlus, X } from "lucide-react";
+import { Phone, Sparkles, GraduationCap, Heart, ArrowRight } from "lucide-react";
+import founder from "@/assets/founder.jpg";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Simone Perling — Sacs en perles faits main" },
-      { name: "description", content: "Découvrez la collection unique de sacs en perles de Simone Perling. Téléchargez le catalogue complet." },
-      { property: "og:title", content: "Simone Perling — Sacs en perles" },
-      { property: "og:description", content: "Sacs en perles faits main. Contact : +228 90 08 19 98" },
+      { title: "Simone Perling — Sacs en perles & formations" },
+      { name: "description", content: "Découvrez les sacs en perles faits main de Simone Perling et nos formations en perlage. Contact : +228 90 08 19 98." },
+      { property: "og:title", content: "Simone Perling — Sacs en perles & formations" },
+      { property: "og:description", content: "Sacs en perles faits main et formations en perlage au Togo." },
     ],
   }),
-  component: Index,
+  component: Home,
 });
 
-function Index() {
-  const [bags, setBags] = useState<Bag[]>([]);
-  const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    setBags(getBags());
-  }, []);
-
+function Home() {
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <header className="border-b border-border/60 bg-gradient-to-b from-secondary/40 to-transparent">
-        <div className="mx-auto max-w-6xl px-5 py-10 text-center">
-          <p className="text-xs uppercase tracking-[0.3em] text-primary/70">Atelier de perles</p>
-          <h1 className="mt-3 font-serif text-4xl font-bold text-primary md:text-6xl">Simone Perling</h1>
-          <p className="mx-auto mt-4 max-w-xl text-sm text-muted-foreground md:text-base">
-            Sacs en perles faits main, pièces uniques tissées avec soin.
-          </p>
-          <div className="mt-6 flex flex-wrap justify-center gap-3">
-            <a href="tel:+22890081998">
-              <Button variant="default" className="gap-2">
-                <Phone className="h-4 w-4" /> +228 90 08 19 98
-              </Button>
-            </a>
-            <Button
-              variant="secondary"
-              className="gap-2"
-              disabled={bags.length === 0}
-              onClick={() => downloadCatalogPDF(bags)}
-            >
-              <Download className="h-4 w-4" /> Télécharger le catalogue
-            </Button>
-          </div>
-        </div>
-      </header>
+      <NavBar />
 
-      <main className="mx-auto max-w-6xl px-5 py-10">
-        <div className="mb-6 flex items-center justify-between gap-3">
-          <h2 className="font-serif text-2xl text-primary">Collection en stock</h2>
-          <Button onClick={() => setOpen(true)} className="gap-2">
-            <Plus className="h-4 w-4" /> Ajouter un sac
-          </Button>
-        </div>
-
-        {bags.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border bg-card/50 p-10 text-center">
-            <p className="text-muted-foreground">Aucun sac pour le moment.</p>
-            <p className="mt-1 text-sm text-muted-foreground">Cliquez sur « Ajouter un sac » pour commencer votre catalogue.</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {bags.map((b) => (
-              <article key={b.id} className="group overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition hover:shadow-md">
-                <div className="aspect-square overflow-hidden bg-secondary">
-                  {b.image ? (
-                    <img src={b.image} alt={b.name} className="h-full w-full object-cover transition group-hover:scale-105" />
-                  ) : (
-                    <div className="flex h-full items-center justify-center text-muted-foreground">Pas d'image</div>
-                  )}
-                </div>
-                <div className="p-4">
-                  <div className="flex items-start justify-between gap-2">
-                    <h3 className="font-serif text-lg text-primary">{b.name || "Sans nom"}</h3>
-                    <span className="rounded-full bg-primary/10 px-2.5 py-1 text-sm font-semibold text-primary">{b.price}</span>
-                  </div>
-                  {b.comment && <p className="mt-2 text-sm text-muted-foreground">{b.comment}</p>}
-                  <button
-                    onClick={() => setBags(removeBag(b.id))}
-                    className="mt-3 inline-flex items-center gap-1 text-xs text-destructive/80 hover:text-destructive"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" /> Supprimer
-                  </button>
-                </div>
-              </article>
-            ))}
-          </div>
-        )}
-      </main>
-
-      <footer className="border-t border-border/60 bg-secondary/30 py-8 text-center text-sm text-muted-foreground">
-        <p className="font-serif text-primary">Simone Perling</p>
-        <p className="mt-1">Commandes & informations : +228 90 08 19 98</p>
-      </footer>
-
-      {open && <AddBagModal onClose={() => setOpen(false)} onSaved={(list) => { setBags(list); setOpen(false); }} />}
-    </div>
-  );
-}
-
-function AddBagModal({ onClose, onSaved }: { onClose: () => void; onSaved: (bags: Bag[]) => void }) {
-  const [name, setName] = useState("");
-  const [price, setPrice] = useState("");
-  const [comment, setComment] = useState("");
-  const [image, setImage] = useState<string>("");
-  const fileRef = useRef<HTMLInputElement>(null);
-
-  const handleFile = (file: File) => {
-    const reader = new FileReader();
-    reader.onload = () => setImage(reader.result as string);
-    reader.readAsDataURL(file);
-  };
-
-  const submit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name && !price && !image) return;
-    const list = addBag({ name, price, comment, image });
-    onSaved(list);
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4" onClick={onClose}>
-      <div
-        className="w-full max-w-lg rounded-t-3xl bg-card p-6 shadow-xl sm:rounded-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="mb-4 flex items-center justify-between">
-          <h3 className="font-serif text-xl text-primary">Nouveau sac</h3>
-          <button onClick={onClose} className="rounded-full p-1 hover:bg-secondary">
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-        <form onSubmit={submit} className="space-y-4">
+      <section className="border-b border-border/60 bg-gradient-to-b from-secondary/40 to-transparent">
+        <div className="mx-auto grid max-w-6xl gap-8 px-5 py-14 md:grid-cols-2 md:items-center md:py-20">
           <div>
-            <Label>Photo</Label>
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
+            <p className="text-xs uppercase tracking-[0.3em] text-primary/70">Atelier de perles</p>
+            <h1 className="mt-3 font-serif text-4xl font-bold text-primary md:text-6xl">
+              L'élégance tissée à la main
+            </h1>
+            <p className="mt-4 max-w-lg text-muted-foreground md:text-lg">
+              Sacs en perles uniques, formations en perlage et accompagnement personnalisé.
+              Bienvenue dans l'univers de Simone Perling.
+            </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link to="/collection">
+                <Button className="gap-2">
+                  Voir la collection <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+              <a href="tel:+22890081998">
+                <Button variant="secondary" className="gap-2">
+                  <Phone className="h-4 w-4" /> +228 90 08 19 98
+                </Button>
+              </a>
+            </div>
+          </div>
+          <div className="relative">
+            <img
+              src={founder}
+              alt="Simone, fondatrice de Simone Perling"
+              className="mx-auto aspect-[3/4] w-full max-w-sm rounded-3xl object-cover shadow-xl"
             />
-            <button
-              type="button"
-              onClick={() => fileRef.current?.click()}
-              className="mt-1 flex aspect-square w-full items-center justify-center overflow-hidden rounded-xl border border-dashed border-border bg-secondary/40 hover:bg-secondary"
-            >
-              {image ? (
-                <img src={image} alt="Aperçu" className="h-full w-full object-cover" />
-              ) : (
-                <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                  <ImagePlus className="h-8 w-8" />
-                  <span className="text-sm">Choisir une image</span>
-                </div>
-              )}
-            </button>
           </div>
-          <div>
-            <Label htmlFor="name">Nom du sac</Label>
-            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex : Sac Akossiwa" />
-          </div>
-          <div>
-            <Label htmlFor="price">Prix</Label>
-            <Input id="price" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="Ex : 15 000 FCFA" />
-          </div>
-          <div>
-            <Label htmlFor="comment">Commentaire</Label>
-            <Textarea id="comment" value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Description, matières, dimensions..." rows={3} />
-          </div>
-          <Button type="submit" className="w-full">Enregistrer</Button>
-        </form>
-      </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-6xl px-5 py-14">
+        <div className="text-center">
+          <p className="text-xs uppercase tracking-[0.3em] text-primary/70">Nos formations</p>
+          <h2 className="mt-2 font-serif text-3xl text-primary md:text-4xl">Apprenez l'art du perlage</h2>
+          <p className="mx-auto mt-3 max-w-2xl text-muted-foreground">
+            Simone Perling organise régulièrement des formations pour transmettre son savoir-faire :
+            techniques de tissage de perles, création de sacs et accessoires uniques.
+          </p>
+        </div>
+
+        <div className="mt-10 grid gap-5 md:grid-cols-3">
+          {[
+            {
+              icon: GraduationCap,
+              title: "Initiation au perlage",
+              text: "Découvrez les bases du tissage de perles et créez votre première pièce en quelques jours.",
+            },
+            {
+              icon: Sparkles,
+              title: "Perfectionnement",
+              text: "Approfondissez les techniques avancées pour réaliser des sacs élaborés et originaux.",
+            },
+            {
+              icon: Heart,
+              title: "Ateliers privés",
+              text: "Sessions personnalisées en petit groupe ou en individuel selon votre rythme.",
+            },
+          ].map((f) => (
+            <div key={f.title} className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <f.icon className="h-6 w-6" />
+              </div>
+              <h3 className="mt-4 font-serif text-xl text-primary">{f.title}</h3>
+              <p className="mt-2 text-sm text-muted-foreground">{f.text}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-10 rounded-2xl border border-border bg-secondary/40 p-6 text-center md:p-8">
+          <h3 className="font-serif text-2xl text-primary">Inscriptions & renseignements</h3>
+          <p className="mt-2 text-muted-foreground">
+            Pour connaître les dates des prochaines sessions, les tarifs et réserver votre place,
+            contactez-nous directement par téléphone ou WhatsApp.
+          </p>
+          <a href="tel:+22890081998" className="mt-4 inline-block">
+            <Button className="gap-2">
+              <Phone className="h-4 w-4" /> Appeler le +228 90 08 19 98
+            </Button>
+          </a>
+        </div>
+      </section>
+
+      <section className="border-t border-border/60 bg-card/30">
+        <div className="mx-auto max-w-6xl px-5 py-14 text-center">
+          <h2 className="font-serif text-3xl text-primary md:text-4xl">Découvrez nos créations</h2>
+          <p className="mx-auto mt-3 max-w-2xl text-muted-foreground">
+            Chaque sac est unique, perlé à la main avec soin et patience.
+            Parcourez la collection et téléchargez notre catalogue.
+          </p>
+          <Link to="/collection" className="mt-6 inline-block">
+            <Button size="lg" className="gap-2">
+              Voir la collection <ArrowRight className="h-4 w-4" />
+            </Button>
+          </Link>
+        </div>
+      </section>
+
+      <SiteFooter />
     </div>
   );
 }
