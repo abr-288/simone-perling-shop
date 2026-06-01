@@ -4,15 +4,15 @@ import { Bag, getBags } from "@/lib/bags-store";
 import { downloadCatalogPDF } from "@/lib/catalog-pdf";
 import { Button } from "@/components/ui/button";
 import { NavBar, SiteFooter } from "@/components/NavBar";
-import { Download, Phone } from "lucide-react";
+import { Download, MessageCircle } from "lucide-react";
 
 export const Route = createFileRoute("/collection")({
   head: () => ({
     meta: [
-      { title: "Collection — Simone Perling" },
-      { name: "description", content: "Découvrez tous les sacs en perles faits main disponibles et téléchargez le catalogue." },
+      { title: "Collection | Simone Perling — Sacs en perles" },
+      { name: "description", content: "Découvrez notre collection de sacs en perles faits main. Sacs à main, sacs cravate, porte-mouchoirs et accessoires uniques." },
       { property: "og:title", content: "Collection — Simone Perling" },
-      { property: "og:description", content: "Sacs en perles faits main disponibles en stock." },
+      { property: "og:description", content: "Sacs en perles faits main de qualité. Collection complète à découvrir." },
     ],
   }),
   component: Collection,
@@ -26,14 +26,14 @@ function Collection() {
     <div className="min-h-screen bg-background text-foreground">
       <NavBar />
 
-      <header className="border-b border-border/60 bg-gradient-to-b from-secondary/40 to-transparent">
-        <div className="mx-auto max-w-6xl px-5 py-12 text-center">
-          <p className="text-xs uppercase tracking-[0.3em] text-primary/70">En stock</p>
-          <h1 className="mt-2 font-serif text-4xl font-bold text-primary md:text-5xl">Notre collection</h1>
-          <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
-            Chaque pièce est unique. Téléchargez le catalogue complet ou contactez-nous pour commander.
+      <header>
+        <div className="mx-auto max-w-6xl px-5 py-16 text-center">
+          <p className="text-xs uppercase tracking-[0.3em] text-primary/60">En stock</p>
+          <h1 className="mt-3 font-serif text-5xl font-bold text-primary md:text-6xl">Notre collection</h1>
+          <p className="mx-auto mt-5 max-w-xl text-muted-foreground leading-relaxed">
+            Chaque pièce est unique. Découvrez nos sacs en perles faits main et passez votre commande.
           </p>
-          <div className="mt-6 flex flex-wrap justify-center gap-3">
+          <div className="mt-8 flex flex-wrap justify-center gap-4">
             <Button
               variant="default"
               className="gap-2"
@@ -42,9 +42,9 @@ function Collection() {
             >
               <Download className="h-4 w-4" /> Télécharger le catalogue
             </Button>
-            <a href="tel:+22890081998">
+            <a href="https://wa.me/22890081998" target="_blank" rel="noreferrer">
               <Button variant="secondary" className="gap-2">
-                <Phone className="h-4 w-4" /> Commander
+                <MessageCircle className="h-4 w-4" /> Commander
               </Button>
             </a>
           </div>
@@ -56,7 +56,7 @@ function Collection() {
           <div className="rounded-2xl border border-dashed border-border bg-card/50 p-10 text-center">
             <p className="text-muted-foreground">La collection sera bientôt mise en ligne.</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              Contactez-nous au +228 90 08 19 98 pour découvrir les pièces disponibles.
+              Contactez-nous sur WhatsApp au +228 90 08 19 98 pour découvrir les pièces disponibles.
             </p>
           </div>
         ) : (
