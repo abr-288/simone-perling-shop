@@ -20,16 +20,7 @@ export const Route = createFileRoute("/collection")({
 
 function Collection() {
   const [bags, setBags] = useState<Bag[]>([]);
-  const [loading, setLoading] = useState(true);
-  
-  useEffect(() => {
-    const loadBags = async () => {
-      const data = await getBags();
-      setBags(data);
-      setLoading(false);
-    };
-    loadBags();
-  }, []);
+  useEffect(() => setBags(getBags()), []);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -61,11 +52,7 @@ function Collection() {
       </header>
 
       <main className="mx-auto max-w-6xl px-5 py-10">
-        {loading ? (
-          <div className="rounded-2xl border border-dashed border-border bg-card/50 p-10 text-center">
-            <p className="text-muted-foreground">Chargement de la collection...</p>
-          </div>
-        ) : bags.length === 0 ? (
+        {bags.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border bg-card/50 p-10 text-center">
             <p className="text-muted-foreground">La collection sera bientôt mise en ligne.</p>
             <p className="mt-1 text-sm text-muted-foreground">
