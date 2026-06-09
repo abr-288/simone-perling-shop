@@ -6,30 +6,49 @@ export type Bag = {
   image: string; // base64 data URL
 };
 
-const KEY = "simone-perling-bags";
+const JSONBIN_URL = 'https://api.jsonbin.io/v3/b/6743e5e1e41b4d3464e7e8e2';
+const JSONBIN_KEY = '$2a$10$X7Z9vK1mN8pQ3rT5wY7zOu';
 
-export const getBags = (): Bag[] => {
-  if (typeof window === "undefined") return [];
+export const getBags = async (): Promise<Bag[]> => {
   try {
-    return JSON.parse(localStorage.getItem(KEY) || "[]");
-  } catch {
+    const response = await fetch(JSONBIN_URL, {
+      headers: {
+        'X-Master-Key': JSONBIN_KEY,
+      },
+    });
+    const data = await response.json();
+    return data.record || [];
+  } catch (error) {
+    console.error('Erreur lors de la récupération des sacs:', error);
     return [];
   }
 };
 
-export const saveBags = (bags: Bag[]) => {
-  localStorage.setItem(KEY, JSON.stringify(bags));
+export const saveBags = async (bags: Bag[]): Promise<void> => {
+  try {
+    await fetch(JSONBIN_URL, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Master-Key': JSONBIN_KEY,
+      },
+      body: JSON.stringify(bags),
+    });
+  } catch (error) {
+    console.error('Erreur lors de la sauvegarde des sacs:', error);
+  }
 };
 
-export const addBag = (bag: Omit<Bag, "id">): Bag[] => {
-  const bags = getBags();
+export const addBag = async (bag: Omit<Bag, "id">): Promise<Bag[]> => {
+  const bags = await getBags();
   const next = [...bags, { ...bag, id: crypto.randomUUID() }];
-  saveBags(next);
+  await saveBags(next);
   return next;
 };
 
-export const removeBag = (id: string): Bag[] => {
-  const next = getBags().filter((b) => b.id !== id);
-  saveBags(next);
+export const removeBag = async (id: string): Promise<Bag[]> => {
+  const bags = await getBags();
+  const next = bags.filter((b) => b.id !== id);
+  await saveBags(next);
   return next;
 };
