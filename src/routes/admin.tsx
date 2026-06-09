@@ -69,8 +69,17 @@ function Login({ onSuccess }: { onSuccess: () => void }) {
 
 function AdminPanel({ onLogout }: { onLogout: () => void }) {
   const [bags, setBags] = useState<Bag[]>([]);
+  const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
-  useEffect(() => setBags(getBags()), []);
+  
+  useEffect(() => {
+    const loadBags = async () => {
+      const data = await getBags();
+      setBags(data);
+      setLoading(false);
+    };
+    loadBags();
+  }, []);
 
   return (
     <main className="mx-auto max-w-6xl px-5 py-10">
@@ -89,7 +98,11 @@ function AdminPanel({ onLogout }: { onLogout: () => void }) {
         </div>
       </div>
 
-      {bags.length === 0 ? (
+      {loading ? (
+        <div className="rounded-2xl border border-dashed border-border bg-card/50 p-10 text-center">
+          <p className="text-muted-foreground">Chargement...</p>
+        </div>
+      ) : bags.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border bg-card/50 p-10 text-center">
           <p className="text-muted-foreground">Aucun sac pour le moment.</p>
         </div>
@@ -107,7 +120,10 @@ function AdminPanel({ onLogout }: { onLogout: () => void }) {
                 </div>
                 {b.comment && <p className="mt-2 text-sm text-muted-foreground">{b.comment}</p>}
                 <button
-                  onClick={() => setBags(removeBag(b.id))}
+                  onClick={async () => {
+                    const updatedBags = await removeBag(b.id);
+                    setBags(updatedBags);
+                  }}
                   className="mt-3 inline-flex items-center gap-1 text-xs text-destructive/80 hover:text-destructive"
                 >
                   <Trash2 className="h-3.5 w-3.5" /> Supprimer
@@ -136,10 +152,11 @@ function AddBagModal({ onClose, onSaved }: { onClose: () => void; onSaved: (bags
     reader.readAsDataURL(file);
   };
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name && !price && !image) return;
-    onSaved(addBag({ name, price, comment, image }));
+    const updatedBags = await addBag({ name, price, comment, image });
+    onSaved(updatedBags);
   };
 
   return (
