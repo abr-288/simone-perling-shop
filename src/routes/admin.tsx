@@ -188,40 +188,72 @@ function AddBagModal({ password, onClose, onSaved }: { password: string; onClose
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4" onClick={onClose}>
-      <div className="w-full max-w-lg rounded-t-3xl bg-card p-6 shadow-xl sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
-        <div className="mb-4 flex items-center justify-between">
-          <h3 className="font-serif text-xl text-primary">Nouveau sac</h3>
-          <button onClick={onClose} className="rounded-full p-1 hover:bg-secondary"><X className="h-5 w-5" /></button>
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm sm:items-center sm:p-4" onClick={onClose}>
+      <div
+        className="flex max-h-[92vh] w-full max-w-lg flex-col rounded-t-3xl bg-card shadow-xl sm:max-h-[90vh] sm:rounded-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between border-b border-border px-5 py-4 sm:px-6">
+          <div className="min-w-0">
+            <h3 className="truncate font-serif text-lg text-primary sm:text-xl">Nouveau sac</h3>
+            <p className="text-xs text-muted-foreground">Ajoutez les informations du sac</p>
+          </div>
+          <button onClick={onClose} aria-label="Fermer" className="shrink-0 rounded-full p-2 hover:bg-secondary">
+            <X className="h-5 w-5" />
+          </button>
         </div>
-        <form onSubmit={submit} className="space-y-4">
-          <div>
-            <Label>Photo</Label>
-            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])} />
-            <button type="button" onClick={() => fileRef.current?.click()} className="mt-1 flex aspect-square w-full items-center justify-center overflow-hidden rounded-xl border border-dashed border-border bg-secondary/40 hover:bg-secondary">
-              {image ? <img src={image} alt="Aperçu" className="h-full w-full object-cover" /> : (
-                <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                  <ImagePlus className="h-8 w-8" />
-                  <span className="text-sm">Choisir une image</span>
-                </div>
-              )}
-            </button>
+
+        <form onSubmit={submit} className="flex min-h-0 flex-1 flex-col">
+          <div className="flex-1 space-y-4 overflow-y-auto px-5 py-4 sm:px-6">
+            <div>
+              <Label>Photo</Label>
+              <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])} />
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                className="relative mt-1.5 flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-xl border border-dashed border-border bg-secondary/40 transition hover:bg-secondary sm:aspect-square"
+              >
+                {image ? (
+                  <>
+                    <img src={image} alt="Aperçu" className="h-full w-full object-cover" />
+                    <span className="absolute bottom-2 right-2 rounded-full bg-background/90 px-2.5 py-1 text-xs font-medium text-foreground shadow">
+                      Changer
+                    </span>
+                  </>
+                ) : (
+                  <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                    <ImagePlus className="h-8 w-8" />
+                    <span className="text-sm">Choisir une image</span>
+                  </div>
+                )}
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="name">Nom du sac</Label>
+                <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex : Sac Akossiwa" />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="price">Prix</Label>
+                <Input id="price" inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="Ex : 15 000 FCFA" />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="comment">Commentaire</Label>
+              <Textarea id="comment" value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Description, matières, dimensions..." rows={3} />
+            </div>
           </div>
-          <div>
-            <Label htmlFor="name">Nom du sac</Label>
-            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex : Sac Akossiwa" />
+
+          <div className="flex flex-col-reverse gap-2 border-t border-border bg-card/60 px-5 py-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] sm:flex-row sm:justify-end sm:px-6">
+            <Button type="button" variant="ghost" onClick={onClose} className="w-full sm:w-auto">
+              Annuler
+            </Button>
+            <Button type="submit" className="w-full sm:w-auto" disabled={saving || (!name && !price && !image)}>
+              {saving ? "Enregistrement..." : "Enregistrer"}
+            </Button>
           </div>
-          <div>
-            <Label htmlFor="price">Prix</Label>
-            <Input id="price" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="Ex : 15 000 FCFA" />
-          </div>
-          <div>
-            <Label htmlFor="comment">Commentaire</Label>
-            <Textarea id="comment" value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Description, matières, dimensions..." rows={3} />
-          </div>
-          <Button type="submit" className="w-full" disabled={saving}>
-            {saving ? "Enregistrement..." : "Enregistrer"}
-          </Button>
         </form>
       </div>
     </div>
