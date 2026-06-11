@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { addBagServer, removeBagServer } from "@/lib/bags.functions";
 
 export type Bag = {
   id: string;
@@ -20,19 +21,12 @@ export const getBags = async (): Promise<Bag[]> => {
   return (data ?? []) as Bag[];
 };
 
-export const addBag = async (bag: Omit<Bag, "id">): Promise<Bag[]> => {
-  const { error } = await supabase.from("bags").insert({
-    name: bag.name,
-    price: bag.price,
-    comment: bag.comment,
-    image: bag.image,
-  });
-  if (error) console.error("Erreur lors de l'ajout du sac:", error);
+export const addBag = async (bag: Omit<Bag, "id">, password: string): Promise<Bag[]> => {
+  await addBagServer({ data: { password, ...bag } });
   return getBags();
 };
 
-export const removeBag = async (id: string): Promise<Bag[]> => {
-  const { error } = await supabase.from("bags").delete().eq("id", id);
-  if (error) console.error("Erreur lors de la suppression du sac:", error);
+export const removeBag = async (id: string, password: string): Promise<Bag[]> => {
+  await removeBagServer({ data: { password, id } });
   return getBags();
 };

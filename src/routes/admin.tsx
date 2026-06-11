@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Bag, addBag, getBags, removeBag } from "@/lib/bags-store";
+import { removeBagServer } from "@/lib/bags.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,29 +14,37 @@ export const Route = createFileRoute("/admin")({
   component: Admin,
 });
 
-const ADMIN_PASSWORD = "simone2026";
-const AUTH_KEY = "simone-admin-auth";
+const AUTH_KEY = "simone-admin-pw";
 
 function Admin() {
-  const [authed, setAuthed] = useState(false);
+  const [password, setPassword] = useState<string | null>(null);
   useEffect(() => {
-    if (typeof window !== "undefined" && sessionStorage.getItem(AUTH_KEY) === "1") {
-      setAuthed(true);
+    if (typeof window !== "undefined") {
+      const stored = sessionStorage.getItem(AUTH_KEY);
+      if (stored) setPassword(stored);
     }
   }, []);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
       <NavBar />
-      {authed ? <AdminPanel onLogout={() => { sessionStorage.removeItem(AUTH_KEY); setAuthed(false); }} /> : <Login onSuccess={() => { sessionStorage.setItem(AUTH_KEY, "1"); setAuthed(true); }} />}
+      {password ? (
+        <AdminPanel
+          password={password}
+          onLogout={() => { sessionStorage.removeItem(AUTH_KEY); setPassword(null); }}
+        />
+      ) : (
+        <Login onSuccess={(pw) => { sessionStorage.setItem(AUTH_KEY, pw); setPassword(pw); }} />
+      )}
       <SiteFooter />
     </div>
   );
 }
 
-function Login({ onSuccess }: { onSuccess: () => void }) {
+function Login({ onSuccess }: { onSuccess: (password: string) => void }) {
   const [pw, setPw] = useState("");
   const [err, setErr] = useState("");
+  const [loading, setLoading] = useState(false);
   return (
     <main className="mx-auto flex max-w-md flex-col items-center px-5 py-16">
       <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -46,10 +55,21 @@ function Login({ onSuccess }: { onSuccess: () => void }) {
         Entrez le mot de passe pour gérer le catalogue.
       </p>
       <form
-        onSubmit={(e) => {
+        onSubmit={async (e) => {
           e.preventDefault();
-          if (pw === ADMIN_PASSWORD) onSuccess();
-          else setErr("Mot de passe incorrect");
+          setErr("");
+          setLoading(true);
+          try {
+            // Verify password by attempting a harmless admin call (delete on non-existent id)
+            await removeBagServer({ data: { password: pw, id: "00000000-0000-0000-0000-000000000000" } });
+            onSuccess(pw);
+          } catch (e: unknown) {
+            const msg = e instanceof Error ? e.message : String(e);
+            if (msg.includes("Unauthorized")) setErr("Mot de passe incorrect");
+            else onSuccess(pw); // accepted but server returned another error
+          } finally {
+            setLoading(false);
+          }
         }}
         className="mt-6 w-full space-y-3"
       >
@@ -61,17 +81,19 @@ function Login({ onSuccess }: { onSuccess: () => void }) {
           autoFocus
         />
         {err && <p className="text-sm text-destructive">{err}</p>}
-        <Button type="submit" className="w-full">Se connecter</Button>
+        <Button type="submit" className="w-full" disabled={loading || !pw}>
+          {loading ? "Vérification..." : "Se connecter"}
+        </Button>
       </form>
     </main>
   );
 }
 
-function AdminPanel({ onLogout }: { onLogout: () => void }) {
+function AdminPanel({ password, onLogout }: { password: string; onLogout: () => void }) {
   const [bags, setBags] = useState<Bag[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
-  
+
   useEffect(() => {
     const loadBags = async () => {
       const data = await getBags();
@@ -121,7 +143,7 @@ function AdminPanel({ onLogout }: { onLogout: () => void }) {
                 {b.comment && <p className="mt-2 text-sm text-muted-foreground">{b.comment}</p>}
                 <button
                   onClick={async () => {
-                    const updatedBags = await removeBag(b.id);
+                    const updatedBags = await removeBag(b.id, password);
                     setBags(updatedBags);
                   }}
                   className="mt-3 inline-flex items-center gap-1 text-xs text-destructive/80 hover:text-destructive"
@@ -134,16 +156,17 @@ function AdminPanel({ onLogout }: { onLogout: () => void }) {
         </div>
       )}
 
-      {open && <AddBagModal onClose={() => setOpen(false)} onSaved={(list) => { setBags(list); setOpen(false); }} />}
+      {open && <AddBagModal password={password} onClose={() => setOpen(false)} onSaved={(list) => { setBags(list); setOpen(false); }} />}
     </main>
   );
 }
 
-function AddBagModal({ onClose, onSaved }: { onClose: () => void; onSaved: (bags: Bag[]) => void }) {
+function AddBagModal({ password, onClose, onSaved }: { password: string; onClose: () => void; onSaved: (bags: Bag[]) => void }) {
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [comment, setComment] = useState("");
   const [image, setImage] = useState("");
+  const [saving, setSaving] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const handleFile = (file: File) => {
@@ -155,8 +178,13 @@ function AddBagModal({ onClose, onSaved }: { onClose: () => void; onSaved: (bags
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name && !price && !image) return;
-    const updatedBags = await addBag({ name, price, comment, image });
-    onSaved(updatedBags);
+    setSaving(true);
+    try {
+      const updatedBags = await addBag({ name, price, comment, image }, password);
+      onSaved(updatedBags);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -191,7 +219,9 @@ function AddBagModal({ onClose, onSaved }: { onClose: () => void; onSaved: (bags
             <Label htmlFor="comment">Commentaire</Label>
             <Textarea id="comment" value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Description, matières, dimensions..." rows={3} />
           </div>
-          <Button type="submit" className="w-full">Enregistrer</Button>
+          <Button type="submit" className="w-full" disabled={saving}>
+            {saving ? "Enregistrement..." : "Enregistrer"}
+          </Button>
         </form>
       </div>
     </div>
