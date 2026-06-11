@@ -6,10 +6,10 @@ export async function downloadCatalogPDF(bags: Bag[]) {
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
 
-  const accentRgb = [122, 50, 40];
-  const textRgb = [35, 20, 15];
-  const mutedRgb = [110, 90, 80];
-  const backgroundRgb = [248, 243, 241];
+  const accentRgb: [number, number, number] = [122, 50, 40];
+  const textRgb: [number, number, number] = [35, 20, 15];
+  const mutedRgb: [number, number, number] = [110, 90, 80];
+  const backgroundRgb: [number, number, number] = [248, 243, 241];
 
   // Cover
   doc.setFillColor(...accentRgb);

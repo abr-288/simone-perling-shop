@@ -1,3 +1,5 @@
+import { supabase } from "@/integrations/supabase/client";
+
 export type Bag = {
   id: string;
   name: string;
@@ -6,49 +8,31 @@ export type Bag = {
   image: string; // base64 data URL
 };
 
-const JSONBIN_URL = 'https://api.jsonbin.io/v3/b/6743e5e1e41b4d3464e7e8e2';
-const JSONBIN_KEY = '$2a$10$X7Z9vK1mN8pQ3rT5wY7zOu';
-
 export const getBags = async (): Promise<Bag[]> => {
-  try {
-    const response = await fetch(JSONBIN_URL, {
-      headers: {
-        'X-Master-Key': JSONBIN_KEY,
-      },
-    });
-    const data = await response.json();
-    return data.record || [];
-  } catch (error) {
-    console.error('Erreur lors de la récupération des sacs:', error);
+  const { data, error } = await supabase
+    .from("bags")
+    .select("id, name, price, comment, image")
+    .order("created_at", { ascending: false });
+  if (error) {
+    console.error("Erreur lors de la récupération des sacs:", error);
     return [];
   }
-};
-
-export const saveBags = async (bags: Bag[]): Promise<void> => {
-  try {
-    await fetch(JSONBIN_URL, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Master-Key': JSONBIN_KEY,
-      },
-      body: JSON.stringify(bags),
-    });
-  } catch (error) {
-    console.error('Erreur lors de la sauvegarde des sacs:', error);
-  }
+  return (data ?? []) as Bag[];
 };
 
 export const addBag = async (bag: Omit<Bag, "id">): Promise<Bag[]> => {
-  const bags = await getBags();
-  const next = [...bags, { ...bag, id: crypto.randomUUID() }];
-  await saveBags(next);
-  return next;
+  const { error } = await supabase.from("bags").insert({
+    name: bag.name,
+    price: bag.price,
+    comment: bag.comment,
+    image: bag.image,
+  });
+  if (error) console.error("Erreur lors de l'ajout du sac:", error);
+  return getBags();
 };
 
 export const removeBag = async (id: string): Promise<Bag[]> => {
-  const bags = await getBags();
-  const next = bags.filter((b) => b.id !== id);
-  await saveBags(next);
-  return next;
+  const { error } = await supabase.from("bags").delete().eq("id", id);
+  if (error) console.error("Erreur lors de la suppression du sac:", error);
+  return getBags();
 };
