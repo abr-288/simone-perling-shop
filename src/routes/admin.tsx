@@ -63,10 +63,8 @@ function Login({ onSuccess }: { onSuccess: (password: string) => void }) {
             // Verify password by attempting a harmless admin call (delete on non-existent id)
             await removeBagServer({ data: { password: pw, id: "00000000-0000-0000-0000-000000000000" } });
             onSuccess(pw);
-          } catch (e: unknown) {
-            const msg = e instanceof Error ? e.message : String(e);
-            if (msg.includes("Unauthorized")) setErr("Mot de passe incorrect");
-            else onSuccess(pw); // accepted but server returned another error
+          } catch {
+            setErr("Mot de passe incorrect ou erreur serveur");
           } finally {
             setLoading(false);
           }

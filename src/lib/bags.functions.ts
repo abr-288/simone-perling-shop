@@ -9,12 +9,16 @@ function assertAdmin(password: string) {
 export const addBagServer = createServerFn({ method: "POST" })
   .inputValidator((data: { password: string; name: string; price: string; comment: string; image: string }) => {
     if (typeof data?.password !== "string") throw new Error("Invalid input");
+    const image = String(data.image ?? "").slice(0, 5_000_000);
+    if (image && !/^data:image\/(jpeg|jpg|png|webp|gif);base64,/.test(image)) {
+      throw new Error("Invalid image format");
+    }
     return {
       password: data.password,
       name: String(data.name ?? "").slice(0, 200),
       price: String(data.price ?? "").slice(0, 100),
       comment: String(data.comment ?? "").slice(0, 2000),
-      image: String(data.image ?? "").slice(0, 5_000_000),
+      image,
     };
   })
   .handler(async ({ data }) => {
